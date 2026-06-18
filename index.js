@@ -1,6 +1,7 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const { MongoClient, ServerApiVersion } = require("mongodb");
 
 dotenv.config();
 
@@ -10,8 +11,45 @@ const PORT = process.env.PORT;
 app.use(cors());
 app.use(express.json());
 
-app.get('/', (req, res) => {
-  res.send('App is running');
+const uri = process.env.MONGODB_URI;
+
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
+});
+async function run() {
+  try {
+    await client.connect();
+
+    const db = client.db("ticket_bari");
+
+    const ticketCollection = db.collection("tickets");
+
+    app.post("/api/vendor/tickets", async (req, res) => {
+      const ticket = req.body;
+      const ticketObj = {
+        ...ticket,
+        createdAt: new Date(),
+      };
+      const result = await ticketCollection.insertOne(ticketObj);
+      res.json(result);
+    });
+
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!",
+    );
+  } finally {
+    // Ensures that the client will close when you finish/error
+    // await client.close();
+  }
+}
+run().catch(console.dir);
+
+app.get("/", (req, res) => {
+  res.send("App is running");
 });
 
 app.listen(PORT, () => {
