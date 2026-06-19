@@ -27,6 +27,7 @@ async function run() {
     const db = client.db("ticket_bari");
 
     const ticketCollection = db.collection("tickets");
+    const bookingCollection = db.collection("bookings");
 
     app.get("/api/tickets", async (req, res) => {
       const tickets = await ticketCollection
@@ -35,6 +36,19 @@ async function run() {
         })
         .toArray();
       res.json(tickets);
+    });
+
+    app.post("/api/user/bookings", async (req, res) => {
+      const booking = req.body;
+
+      const result = await bookingCollection.insertOne(booking);
+
+      await ticketCollection.updateOne(
+        { _id: new ObjectId(booking.ticketId) },
+        { $inc: { quantity: -Number(booking.quantity) } },
+      );
+
+      res.json(result);
     });
 
     app.get("/api/tickets/:id", async (req, res) => {
