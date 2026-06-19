@@ -28,6 +28,14 @@ async function run() {
 
     const ticketCollection = db.collection("tickets");
 
+    app.get("/api/vendor/tickets/:id", async (req, res) => {
+      const vendorId = req.params.id;
+      const result = await ticketCollection.find({
+        vendorId: vendorId,
+      }).toArray();
+      res.json(result);
+    });
+
     app.post("/api/vendor/tickets", async (req, res) => {
       const ticket = req.body;
       const ticketObj = {
