@@ -28,11 +28,22 @@ async function run() {
 
     const ticketCollection = db.collection("tickets");
 
+    app.get("/api/tickets", async (req, res) => {
+      const tickets = await ticketCollection
+        .find({
+          status: "approved",
+        })
+        .toArray();
+      res.json(tickets);
+    });
+
     app.get("/api/vendor/tickets/:id", async (req, res) => {
       const vendorId = req.params.id;
-      const result = await ticketCollection.find({
-        vendorId: vendorId,
-      }).toArray();
+      const result = await ticketCollection
+        .find({
+          vendorId: vendorId,
+        })
+        .toArray();
       res.json(result);
     });
 
