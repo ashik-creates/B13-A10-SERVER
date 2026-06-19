@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 dotenv.config();
 
@@ -35,6 +35,16 @@ async function run() {
         })
         .toArray();
       res.json(tickets);
+    });
+
+    app.get("/api/tickets/:id", async (req, res) => {
+      const ticketId = req.params.id;
+
+      const ticket = await ticketCollection.findOne({
+        _id: new ObjectId(ticketId),
+      });
+
+      res.json(ticket);
     });
 
     app.get("/api/vendor/tickets/:id", async (req, res) => {
