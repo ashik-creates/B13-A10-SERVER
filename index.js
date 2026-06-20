@@ -51,6 +51,31 @@ async function run() {
       res.json(result);
     });
 
+    app.get("/api/user/bookings/:vendorId", async (req, res) => {
+      const vendorId = req.params.vendorId;
+      const result = await bookingCollection
+        .find({ vendorId: vendorId })
+        .toArray();
+      res.json(result);
+    });
+
+    app.patch("/api/vendor/bookings/:id/status", async (req, res) => {
+      const bookingId = req.params.id;
+
+      const {status} = req.body;
+
+      const result = await bookingCollection.updateOne(
+        { _id: new ObjectId(bookingId) },
+        {
+          $set: {
+            status: status,
+          },
+        },
+      );
+
+      res.json(result);
+    });
+
     app.get("/api/tickets/:id", async (req, res) => {
       const ticketId = req.params.id;
 
