@@ -138,6 +138,14 @@ async function run() {
       res.json(result);
     });
 
+    app.get("/api/user/bookings/:userId", async (req, res) => {
+      const userId = req.params.userId;
+      const result = await bookingCollection
+        .find({ userId: userId })
+        .toArray();
+      res.json(result);
+    });
+
     app.post("/api/vendor/tickets", async (req, res) => {
       const ticket = req.body;
       const ticketObj = {
