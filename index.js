@@ -96,6 +96,48 @@ async function run() {
       res.json(result);
     });
 
+    app.patch("/api/vendor/tickets/:id/update", async (req, res) => {
+      const ticketId = req.params.id;
+      const ticketData = req.body;
+
+      const ticket = await ticketCollection.findOne({
+        _id: new ObjectId(ticketId),
+      });
+
+      if(ticket.status === "rejected"){
+        return res.status(400).json({ message: "Cannot update a rejected ticket" });
+      }
+
+      const result = await ticketCollection.updateOne(
+        { _id: new ObjectId(ticketId) },
+        {
+          $set: {
+            ...ticketData,
+          },
+        }
+      );
+
+      res.json(result);
+    });
+
+    app.delete("/api/vendor/tickets/:id/delete", async (req, res) => {
+      const ticketId = req.params.id;
+
+      const ticket = await ticketCollection.findOne({
+        _id: new ObjectId(ticketId),
+      }); 
+
+      if(ticket.status === "rejected"){
+        return res.status(400).json({ message: "Cannot delete a rejected ticket" });
+      }
+
+      const result = await ticketCollection.deleteOne({
+        _id: new ObjectId(ticketId),
+      });
+
+      res.json(result);
+    });
+
     app.post("/api/vendor/tickets", async (req, res) => {
       const ticket = req.body;
       const ticketObj = {
