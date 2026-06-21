@@ -146,6 +146,11 @@ async function run() {
       res.json(result);
     });
 
+    app.get("/api/admin/tickets", async (req, res) => {
+      const tickets = await ticketCollection.find().toArray();
+      res.json(tickets);
+    });
+
     app.post("/api/vendor/tickets", async (req, res) => {
       const ticket = req.body;
       const ticketObj = {
