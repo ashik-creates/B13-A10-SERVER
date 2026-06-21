@@ -189,6 +189,31 @@ async function run() {
       res.json(result);
     });
 
+    app.patch("/api/admin/users/:id/fraud", async (req, res) => {
+      const userId = req.params.id;
+      const { isFraud } = req.body;
+
+      const result = await userCollection.updateOne(
+        { _id: new ObjectId(userId) },
+        {
+          $set: {
+            isFraud: isFraud,
+          },
+        }
+      );
+
+      await ticketCollection.updateMany(
+        { vendorId: userId },
+        {
+          $set: {
+            status: "rejected",
+          },
+        }
+      );
+
+      res.json(result);
+    });
+
     app.post("/api/vendor/tickets", async (req, res) => {
       const ticket = req.body;
       const ticketObj = {
