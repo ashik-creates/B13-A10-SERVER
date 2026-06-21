@@ -173,6 +173,22 @@ async function run() {
       res.json(users);
     });
 
+    app.patch("/api/admin/users/:id/role", async (req, res) => {
+      const userId = req.params.id;
+      const { role } = req.body;
+
+      const result = await userCollection.updateOne(
+        { _id: new ObjectId(userId) },
+        {
+          $set: {
+            role: role,
+          },
+        }
+      );
+
+      res.json(result);
+    });
+
     app.post("/api/vendor/tickets", async (req, res) => {
       const ticket = req.body;
       const ticketObj = {
