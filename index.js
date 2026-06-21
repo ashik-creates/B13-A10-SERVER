@@ -28,6 +28,7 @@ async function run() {
 
     const ticketCollection = db.collection("tickets");
     const bookingCollection = db.collection("bookings");
+    const userCollection = db.collection("user");
 
     app.get("/api/tickets", async (req, res) => {
       const tickets = await ticketCollection
@@ -149,6 +150,27 @@ async function run() {
     app.get("/api/admin/tickets", async (req, res) => {
       const tickets = await ticketCollection.find().toArray();
       res.json(tickets);
+    });
+
+    app.patch("/api/admin/tickets/:id/status", async (req, res) => {
+      const ticketId = req.params.id;
+      const { status } = req.body;
+
+      const result = await ticketCollection.updateOne(
+        { _id: new ObjectId(ticketId) },
+        {
+          $set: {
+            status: status,
+          },
+        }
+      );
+
+      res.json(result);
+    });
+
+    app.get("/api/admin/users", async (req, res) => {
+      const users = await userCollection.find().toArray();
+      res.json(users);
     });
 
     app.post("/api/vendor/tickets", async (req, res) => {
