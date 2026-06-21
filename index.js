@@ -52,7 +52,7 @@ async function run() {
       res.json(result);
     });
 
-    app.get("/api/user/bookings/:vendorId", async (req, res) => {
+    app.get("/api/vendor/bookings/:vendorId", async (req, res) => {
       const vendorId = req.params.vendorId;
       const result = await bookingCollection
         .find({ vendorId: vendorId })
@@ -63,7 +63,7 @@ async function run() {
     app.patch("/api/vendor/bookings/:id/status", async (req, res) => {
       const bookingId = req.params.id;
 
-      const {status} = req.body;
+      const { status } = req.body;
 
       const result = await bookingCollection.updateOne(
         { _id: new ObjectId(bookingId) },
@@ -105,8 +105,10 @@ async function run() {
         _id: new ObjectId(ticketId),
       });
 
-      if(ticket.status === "rejected"){
-        return res.status(400).json({ message: "Cannot update a rejected ticket" });
+      if (ticket.status === "rejected") {
+        return res
+          .status(400)
+          .json({ message: "Cannot update a rejected ticket" });
       }
 
       const result = await ticketCollection.updateOne(
@@ -115,7 +117,7 @@ async function run() {
           $set: {
             ...ticketData,
           },
-        }
+        },
       );
 
       res.json(result);
@@ -126,10 +128,12 @@ async function run() {
 
       const ticket = await ticketCollection.findOne({
         _id: new ObjectId(ticketId),
-      }); 
+      });
 
-      if(ticket.status === "rejected"){
-        return res.status(400).json({ message: "Cannot delete a rejected ticket" });
+      if (ticket.status === "rejected") {
+        return res
+          .status(400)
+          .json({ message: "Cannot delete a rejected ticket" });
       }
 
       const result = await ticketCollection.deleteOne({
@@ -141,9 +145,7 @@ async function run() {
 
     app.get("/api/user/bookings/:userId", async (req, res) => {
       const userId = req.params.userId;
-      const result = await bookingCollection
-        .find({ userId: userId })
-        .toArray();
+      const result = await bookingCollection.find({ userId: userId }).toArray();
       res.json(result);
     });
 
@@ -162,7 +164,7 @@ async function run() {
           $set: {
             status: status,
           },
-        }
+        },
       );
 
       res.json(result);
@@ -183,7 +185,7 @@ async function run() {
           $set: {
             role: role,
           },
-        }
+        },
       );
 
       res.json(result);
@@ -197,8 +199,10 @@ async function run() {
         _id: new ObjectId(userId),
       });
 
-      if(user.role !== "vendor"){
-        return res.status(400).json({ message: "Only vendors can be marked as fraud" });  
+      if (user.role !== "vendor") {
+        return res
+          .status(400)
+          .json({ message: "Only vendors can be marked as fraud" });
       }
 
       const result = await userCollection.updateOne(
@@ -207,7 +211,7 @@ async function run() {
           $set: {
             isFraud: isFraud,
           },
-        }
+        },
       );
 
       await ticketCollection.updateMany(
@@ -216,7 +220,7 @@ async function run() {
           $set: {
             status: "rejected",
           },
-        }
+        },
       );
 
       res.json(result);
@@ -226,10 +230,20 @@ async function run() {
       const ticketId = req.params.id;
       const { isAdvertised } = req.body;
 
-      const advertisedTicketCount = await ticketCollection.countDocuments({ isAdvertised: true });
+      const advertisedTicketCount = await ticketCollection.countDocuments({
+        isAdvertised: true,
+      });
 
-      if(advertisedTicketCount >= 6){
-        return res.status(400).json({ message: "Maximum number of advertised tickets reached" });
+      if (isAdvertised === true) {
+        const count = await ticketCollection.countDocuments({
+          isAdvertised: true,
+        });
+
+        if (count >= 6) {
+          return res.status(400).json({
+            message: "Maximum number of advertised tickets reached",
+          });
+        }
       }
 
       const result = await ticketCollection.updateOne(
@@ -238,10 +252,17 @@ async function run() {
           $set: {
             isAdvertised: isAdvertised,
           },
-        }
+        },
       );
 
       res.json(result);
+    });
+
+    app.get("/api/tickets/advertised/all", async (req, res) => {
+      const tickets = await ticketCollection
+        .find({ isAdvertised: true })
+        .toArray();
+      res.json(tickets);
     });
 
     app.post("/api/vendor/tickets", async (req, res) => {
