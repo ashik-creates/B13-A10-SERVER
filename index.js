@@ -193,6 +193,14 @@ async function run() {
       const userId = req.params.id;
       const { isFraud } = req.body;
 
+      const user = await userCollection.findOne({
+        _id: new ObjectId(userId),
+      });
+
+      if(user.role !== "vendor"){
+        return res.status(400).json({ message: "Only vendors can be marked as fraud" });  
+      }
+
       const result = await userCollection.updateOne(
         { _id: new ObjectId(userId) },
         {
@@ -207,6 +215,28 @@ async function run() {
         {
           $set: {
             status: "rejected",
+          },
+        }
+      );
+
+      res.json(result);
+    });
+
+    app.patch("/api/admin/tickets/:id/advertise", async (req, res) => {
+      const ticketId = req.params.id;
+      const { isAdvertised } = req.body;
+
+      const advertisedTicketCount = await ticketCollection.countDocuments({ isAdvertised: true });
+
+      if(advertisedTicketCount >= 6){
+        return res.status(400).json({ message: "Maximum number of advertised tickets reached" });
+      }
+
+      const result = await ticketCollection.updateOne(
+        { _id: new ObjectId(ticketId) },
+        {
+          $set: {
+            isAdvertised: isAdvertised,
           },
         }
       );
