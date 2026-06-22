@@ -31,37 +31,38 @@ async function run() {
     const userCollection = db.collection("user");
 
     app.get("/api/tickets", async (req, res) => {
-      const { from, to, transport, sort } = req.query;
-
+      const { from, to, transport, sort, page } = req.query;
       console.log(req.query);
 
       const query = { status: "approved" };
 
-      if (from) {
-        query.from = { $regex: from.trim(), $options: "i" };
-      }
+      if (from) query.from = { $regex: from.trim(), $options: "i" };
+      if (to) query.to = { $regex: to.trim(), $options: "i" };
+      if (transport) query.transportType = transport.trim();
 
-      if (to) {
-        query.to = { $regex: to.trim(), $options: "i" };
-      }
+      const sortObj =
+        sort === "asc" ? { price: 1 } : sort === "desc" ? { price: -1 } : {};
 
-      if (transport) {
-        query.transportType = transport;
-      }
+      const total = await ticketCollection.countDocuments(query);
 
-      let cursor = ticketCollection.find(query);
+      const perPage = 6;
+      const currentPage = parseInt(page) || 1;
+      const skipItems = (currentPage - 1) * perPage;
 
-      if (sort === "asc") {
-        cursor = cursor.sort({ price: 1 });
-      }
+      const tickets = await ticketCollection
+        .find(query)
+        .sort(sortObj)
+        .skip(skipItems)
+        .limit(perPage)
+        .toArray();
 
-      if (sort === "desc") {
-        cursor = cursor.sort({ price: -1 });
-      }
+      res.json({ total, tickets });
+    });
 
-      const tickets = await cursor.toArray();
-
-      res.json(tickets);
+    app.get("/api/admin/tickets/all", async (req, res) => {
+      const query = { status: "approved" };
+      const result = await ticketCollection.find(query).toArray();
+      res.json(result);
     });
 
     app.post("/api/user/bookings", async (req, res) => {
