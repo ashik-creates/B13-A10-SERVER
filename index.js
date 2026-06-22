@@ -31,11 +31,36 @@ async function run() {
     const userCollection = db.collection("user");
 
     app.get("/api/tickets", async (req, res) => {
-      const tickets = await ticketCollection
-        .find({
-          status: "approved",
-        })
-        .toArray();
+      const { from, to, transport, sort } = req.query;
+
+      console.log(req.query);
+
+      const query = { status: "approved" };
+
+      if (from) {
+        query.from = { $regex: from.trim(), $options: "i" };
+      }
+
+      if (to) {
+        query.to = { $regex: to.trim(), $options: "i" };
+      }
+
+      if (transport) {
+        query.transportType = transport;
+      }
+
+      let cursor = ticketCollection.find(query);
+
+      if (sort === "asc") {
+        cursor = cursor.sort({ price: 1 });
+      }
+
+      if (sort === "desc") {
+        cursor = cursor.sort({ price: -1 });
+      }
+
+      const tickets = await cursor.toArray();
+
       res.json(tickets);
     });
 
