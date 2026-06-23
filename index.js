@@ -29,6 +29,7 @@ async function run() {
     const ticketCollection = db.collection("tickets");
     const bookingCollection = db.collection("bookings");
     const userCollection = db.collection("user");
+    const paymentCollection = db.collection("payments");
 
     app.get("/api/tickets", async (req, res) => {
       const { from, to, transport, sort, page } = req.query;
@@ -83,6 +84,35 @@ async function run() {
       const result = await bookingCollection
         .find({ vendorId: vendorId })
         .toArray();
+      res.json(result);
+    });
+
+    app.post("/api/save/payments/user", async (req, res) => {
+      const { bookingId } = req.body;
+      const { sessionId } = req.body;
+      const payment = req.body;
+
+      const alreadyExists = await paymentCollection.findOne({
+        sessionId: sessionId,
+      });
+
+      if (alreadyExists) {
+        return res.status(400).json({
+          message: "Payment already exists",
+        });
+      }
+
+      const result = await paymentCollection.insertOne(payment);
+      
+      await bookingCollection.updateOne(
+        { _id: new ObjectId(bookingId) },
+        {
+          $set: {
+            status: "paid",
+          },
+        },
+      );
+
       res.json(result);
     });
 
