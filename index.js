@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 dotenv.config();
@@ -20,6 +21,37 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
+);
+
+const verifyToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer")) {
+    return res.status(401).json({ msg: "Unauthorized" });
+  }
+
+
+  const token = authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ msg: "Unauthorized" });
+  }
+
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
+    console.log(payload);
+    req.user = payload;
+
+    next();
+  } catch (error) {
+    console.log(error);
+    return res.status(401).json({ msg: "Unauthorized" });
+  }
+};
+
 async function run() {
   try {
     await client.connect();
@@ -172,7 +204,7 @@ async function run() {
       });
     });
 
-    app.get("/api/tickets/:id", async (req, res) => {
+    app.get("/api/tickets/:id",verifyToken, async (req, res) => {
       const ticketId = req.params.id;
 
       const ticket = await ticketCollection.findOne({
@@ -180,6 +212,16 @@ async function run() {
       });
 
       res.json(ticket);
+    });
+
+    app.get("/api/tickets/home/latest", async (req, res) => {
+      const latestTickets = await ticketCollection
+        .find({ status: "approved" })
+        .sort({ createdAt: -1 })
+        .limit(6)
+        .toArray();
+
+      res.json(latestTickets);
     });
 
     app.get("/api/vendor/tickets/:id", async (req, res) => {
