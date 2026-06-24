@@ -102,8 +102,11 @@ async function run() {
         });
       }
 
-      const result = await paymentCollection.insertOne(payment);
-      
+      const result = await paymentCollection.insertOne({
+        ...payment,
+        createdAt: new Date(),
+      });
+
       await bookingCollection.updateOne(
         { _id: new ObjectId(bookingId) },
         {
@@ -131,6 +134,42 @@ async function run() {
       );
 
       res.json(result);
+    });
+
+    app.get("/api/transactions/user/:userId", async (req, res) => {
+      const userId = req.params.userId;
+      const result = await paymentCollection.find({ userId: userId }).toArray();
+      res.json(result);
+    });
+
+    app.get("/api/vendor/stats/:vendorId", async (req, res) => {
+      const { vendorId } = req.params;
+
+      const totalTickets = await ticketCollection.countDocuments({
+        vendorId,
+      });
+
+      const bookings = await bookingCollection.find({ vendorId }).toArray();
+
+      const paidBookings = bookings.filter(
+        (booking) => booking.status === "paid",
+      );
+
+      const totalSold = paidBookings.reduce(
+        (sum, booking) => sum + Number(booking.quantity),
+        0,
+      );
+
+      const totalRevenue = paidBookings.reduce(
+        (sum, booking) => sum + Number(booking.totalPrice),
+        0,
+      );
+
+      res.json({
+        totalTickets,
+        totalSold,
+        totalRevenue,
+      });
     });
 
     app.get("/api/tickets/:id", async (req, res) => {
