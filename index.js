@@ -41,7 +41,6 @@ const verifyToken = async (req, res, next) => {
 
   try {
     const { payload } = await jwtVerify(token, JWKS);
-    console.log(payload);
     req.user = payload;
 
     next();
@@ -118,7 +117,6 @@ async function run() {
 
     app.get("/api/tickets", async (req, res) => {
       const { from, to, transport, sort, page } = req.query;
-      console.log(req.query);
 
       const query = { status: "approved" };
 
@@ -141,6 +139,8 @@ async function run() {
         .skip(skipItems)
         .limit(perPage)
         .toArray();
+
+        
 
       res.json({ total, tickets });
     });
