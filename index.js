@@ -87,7 +87,7 @@ const verifyVendor = async (req, res, next) => {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     const db = client.db("ticket_bari");
 
